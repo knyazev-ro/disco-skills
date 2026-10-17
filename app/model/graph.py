@@ -4,7 +4,7 @@ from app.model.brain import decider
 from langchain.messages import SystemMessage, ToolMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
 from app.model.prompts import pull_prompt
-from app.model.tools import should_use_skill, select_subskill, determine_skill_check_difficulty, roll_dice, dice_treshold_pass
+from app.model.tools import should_use_skill, select_subskill, determine_skill_check_difficulty, roll_dice, dice_treshold_pass, difficulty_label
 from typing import Optional
 import operator
 
@@ -35,9 +35,19 @@ def check_if_skill_response_needed(state: MessagesState):
 def determine_skill(state: MessagesState):
     # what skill should we use to respond or ignore such a pussy
     if state['skill']:
+    # if True:
         return "determine_subskill"
     else:
         return END
+
+def check_if_subskill_is_set(state: MessagesState):
+    # what skill should we use to respond or ignore such a pussy
+    if state['subskill']:
+    # if True:
+        return "determine_skill_check"
+    else:
+        return END
+
 
 def determine_subskill(state: MessagesState):
     # if skill X then what subskill Y
@@ -68,7 +78,11 @@ def determine_skill_check(state: MessagesState):
             tool_response = determine_skill_check_difficulty.invoke(tool_call['args'])
 
     if tool_response is None:
-        return 
+        return {
+        'difficulty': 1,
+        'rolled_dice': 1,
+        'is_passed': True,
+    }
     
     rolled_dice = roll_dice()
     is_passed = dice_treshold_pass(tool_response, rolled_dice)
@@ -84,6 +98,15 @@ def generate_subskill_response(state: MessagesState):
             content=pull_prompt('HARDCOOORE!', **state)
         ),
     ] + state['messages'])
+
+    response.additional_kwargs = {
+        'role': state['subskill'],
+        'd': state['difficulty'],
+        'd_label': difficulty_label(state['difficulty']),
+        'r': state['rolled_dice'],
+        'p': state['is_passed'],
+    }
+
     return {
         'messages': [response]
     }
@@ -97,7 +120,9 @@ disco_builder.add_node('generate_subskill_response', generate_subskill_response)
 
 disco_builder.add_edge(START, 'check_if_skill_response_needed')
 disco_builder.add_conditional_edges('check_if_skill_response_needed', determine_skill, ['determine_subskill', END])
-disco_builder.add_edge('determine_subskill', 'determine_skill_check')
+# disco_builder.add_edge('determine_subskill', 'determine_skill_check')
+disco_builder.add_conditional_edges('determine_subskill', check_if_subskill_is_set, ['determine_skill_check', END])
+
 disco_builder.add_edge('determine_skill_check', 'generate_subskill_response')
 disco_builder.add_edge('generate_subskill_response', END)
 

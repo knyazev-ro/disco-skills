@@ -20,6 +20,25 @@ def determine_skill_check_difficulty(difficulty: int) -> int:
     """
     return max(1, min(int(difficulty), 20))
 
+def difficulty_label(d: int) -> str:
+    if d <= 7:
+        return "Trivial"
+    elif d <= 9:
+        return "Easy"
+    elif d <= 11:
+        return "Medium"
+    elif d == 12:
+        return "Challenging"
+    elif d == 13:
+        return "Formidable"
+    elif d == 14:
+        return "Legendary"
+    elif d == 15:
+        return "Heroic"
+    elif d <= 17:
+        return "Godly"
+    else:
+        return "Impossible"
 
 @tool
 def should_use_skill(skill: Optional[str]) -> Optional[str]:
@@ -38,3 +57,4 @@ def select_subskill(subskill: str) -> str:
         - subskill: str
     """
     return subskill
+
