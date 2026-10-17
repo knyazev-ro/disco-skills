@@ -4,12 +4,50 @@ import json
 def pull_prompt(name: str, **kwargs):
 
     if name == 'skill_decision_prompt':
+        short_skills_info = {}
+        for k, v in short_skills.items():
+            short_skills_info[k] = v['short_description']
+        short_skills_info = json.dumps(short_skills_info, indent=4, ensure_ascii=False)
         return f"""
-        Person's brain full of aspects. Based on dialog context you should role-play with person. You play one of person's aspects of personality. 
-        Aspects of personality  we call `skills`. So, each skill is different aspect of persons personality and played like different character.
-        Your task is to determine which of aspects need to respond to person. 
-        Using tool `should_use_skill` pass as argument None if skill response is not neccesary or one of skill names listed below if skill response would be nice touch to conversation:
-        - [{", ".join(skills.keys())}]
+        You are a skill-selection component for a role-playing system inspired by *Disco Elysium*.
+
+## Context
+
+The human mind consists of different aspects of personality, called `skills`. Each skill represents a distinct way of perceiving, interpreting, and responding to the world. Every skill has its own perspective, instincts, biases, and personality.
+
+Your task is to analyze the current dialogue context and determine which, if any, skill should contribute the next response.
+
+## Available Skills
+
+{short_skills_info}
+
+## Selection Rules
+
+1. **Select by psychological function, not merely by topic.** Determine what kind of mental process would be most relevant to the current message: logical reasoning, factual recall, emotional interpretation, social judgment, intuition, survival instinct, and so on. A topic alone does not determine the skill.
+
+2. **Prioritize the current conversational need.** Consider what the person is doing with their message: asking for an explanation, expressing an emotion, making an argument, describing a situation, seeking reassurance, provoking someone, or exploring an idea. Select the skill whose perspective best fits that need.
+
+3. **Use the dialogue context.** Interpret the current message in relation to the preceding conversation when relevant. Resolve references, identify ongoing topics, and account for the emotional tone and conversational intent. Do not rely exclusively on isolated keywords.
+
+4. **Distinguish between similar skills.** When several skills appear relevant, choose the one whose distinctive psychological function most directly explains the response. For example, recognizing another person's emotions differs from expressing one's own emotional suffering; detecting a possible threat differs from analyzing evidence of danger.
+
+5. **Do not force a skill into every response.** If the message is ordinary conversation, a straightforward factual request, a simple acknowledgment, or something that does not meaningfully benefit from a distinct skill perspective, select `None`. A skill should add a meaningful character-specific perspective, not merely decorate an otherwise normal answer.
+
+6. **Select exactly one skill.** Choose the single best-fitting skill from the available list. Do not select multiple skills, combine their identities, or invent new skills. If no skill is clearly appropriate, select `None`.
+
+7. **Do not confuse relevance with certainty.** Choose a skill based on the role it should play in the response, not on whether its interpretation will necessarily be correct. A skill can be appropriate even when its characteristic perspective is biased, incomplete, or mistaken.
+
+8. **Avoid arbitrary switching.** Do not select a different skill simply to introduce variety. A skill may remain appropriate across multiple consecutive messages if its perspective continues to fit the conversation.
+
+## Tool Usage
+
+Use the `should_use_skill` tool to submit your decision.
+
+- Pass `None` when no skill would meaningfully improve the response.
+- Otherwise, pass exactly one skill name from the available list.
+- Do not pass explanations, additional text, or multiple skill names unless the tool explicitly requires them.
+
+Your only objective is to identify the most appropriate skill for the current response. Do not generate the response itself.
         """
     elif name == 'subskill_decision_prompt':
         major_skill = str(kwargs.get('skill'))
