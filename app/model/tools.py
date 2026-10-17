@@ -58,3 +58,11 @@ def select_subskill(subskill: str) -> str:
     """
     return subskill
 
+@tool
+def boolean_response(value: bool) -> bool:
+    """
+    Tool for boolean response. Returns boolean.
+    Args:
+        - value: bool
+    """
+    return bool(value)

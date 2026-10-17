@@ -4,10 +4,11 @@ from app.model.brain import decider
 from langchain.messages import SystemMessage, ToolMessage, HumanMessage
 from langgraph.graph import StateGraph, START, END
 from app.model.prompts import pull_prompt
-from app.model.tools import should_use_skill, select_subskill, determine_skill_check_difficulty, roll_dice, dice_treshold_pass, difficulty_label
+from app.model.tools import should_use_skill, select_subskill, determine_skill_check_difficulty, roll_dice, dice_treshold_pass, difficulty_label, boolean_response
 from typing import Optional
 import operator
 
+DEPTH_LIMIT = 4
 
 class MessagesState(TypedDict):
     messages: Annotated[list[AnyMessage], operator.add]
@@ -16,8 +17,10 @@ class MessagesState(TypedDict):
     difficulty: Optional[int]
     rolled_dice: Optional[int]
     is_passed: Optional[bool]
+    depth: Optional[int]
 
 def check_if_skill_response_needed(state: MessagesState):
+    
     response = decider.invoke([
         SystemMessage(
             content=pull_prompt('skill_decision_prompt')
@@ -29,7 +32,10 @@ def check_if_skill_response_needed(state: MessagesState):
             tool_response = should_use_skill.invoke(tool_call['args'])
 
     return {
-        'skill': tool_response
+        'skill': tool_response,
+        'difficulty': None,
+        'rolled_dice': None,
+        'is_passed': None,
     }
 
 def determine_skill(state: MessagesState):
@@ -53,7 +59,7 @@ def determine_subskill(state: MessagesState):
     # if skill X then what subskill Y
     response = decider.invoke([
         SystemMessage(
-            content=pull_prompt('subskill_decision_prompt', skill=state['skill'])
+            content=pull_prompt('subskill_decision_prompt', skill=state['skill'], old_subskill=state['subskill'])
         ),
     ] + state['messages'])
 
@@ -108,8 +114,27 @@ def generate_subskill_response(state: MessagesState):
     }
 
     return {
-        'messages': [response]
+        'messages': [response],
+        "depth": (0 if state['depth'] is None else state['depth']) + 1
     }
+
+def is_response_over(state: MessagesState):
+    response = decider.invoke([
+        SystemMessage(
+            content=pull_prompt('is_response_over')
+        ),
+    ] + state['messages'])
+
+    tool_response = None
+    for tool_call in response.tool_calls:
+        if tool_call['name'] == "boolean_response":
+            tool_response = boolean_response.invoke(tool_call['args'])
+
+    if tool_response and (0 if state['depth'] is None else state['depth']) <= DEPTH_LIMIT:
+        return "check_if_skill_response_needed"
+    else:
+        return END
+
 
 disco_builder = StateGraph(MessagesState)
 
@@ -124,6 +149,7 @@ disco_builder.add_conditional_edges('check_if_skill_response_needed', determine_
 disco_builder.add_conditional_edges('determine_subskill', check_if_subskill_is_set, ['determine_skill_check', END])
 
 disco_builder.add_edge('determine_skill_check', 'generate_subskill_response')
-disco_builder.add_edge('generate_subskill_response', END)
+disco_builder.add_conditional_edges('generate_subskill_response', is_response_over, ['check_if_skill_response_needed', END])
+# disco_builder.add_edge('generate_subskill_response', END)
 
 disco_graph = disco_builder.compile()
