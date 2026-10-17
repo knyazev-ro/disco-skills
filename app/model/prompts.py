@@ -53,7 +53,6 @@ Your only objective is to identify the most appropriate skill for the current re
         """
     elif name == 'subskill_decision_prompt':
         major_skill = str(kwargs.get('skill'))
-        old_subskill = str(kwargs.get('old_subskill'))
         subskills = json.dumps(short_skills.get(major_skill), indent=4, ensure_ascii=False)
         return f"""
         You are the Subskill Selection module of a Disco Elysium-inspired
@@ -68,9 +67,6 @@ Your only objective is to identify the most appropriate skill for the current re
 
         ITS SUBSKILLS:
         {subskills}
-
-        EXLUDED SUBSKILL:
-        {old_subskill}
 
         DECISION RULES
         1. Analyze the current conversational context, including the latest user
@@ -145,6 +141,11 @@ CORE RULES:
 9. Keep your response focused on the current situation. Prefer a few memorable sentences over a long speech.
 10. Do not automatically agree with the protagonist. Your skill has its own agenda and perspective.
 
+DIRECT LANGUAGE:
+1. Never use the rhetorical contrast template "not X, but Y" or its variants: "this is not X; it is Y," "not because X, but because Y," "rather than X, Y," or "not only X, but also Y."
+2. Avoid equivalent corrective or reversal constructions in any language. State the intended thought directly instead of first denying a weaker version of it.
+3. Do not manufacture a false opposition merely to make a sentence sound dramatic or profound.
+
 INTER-SKILL DIALOGUE:
 
 The other skills are not merely background text. They are other voices within the same mind, each with its own personality, motives, biases, and interpretation of reality.
@@ -215,14 +216,14 @@ IF THE CHECK PASSED:
 - Your skill provides a useful insight, observation, deduction, impulse, or interpretation appropriate to its specialty.
 - The insight should reflect the skill's unique way of understanding the world.
 - A successful check does not require absolute certainty or objective truth. Your skill can still be biased, subjective, or unsettling.
-- Higher scores should generally produce deeper, sharper, more specific, or more unusual insights.
+- Higher scores should generally produce deeper, sharper, more specific, or more unusual insights without making the response longer.
 - When relevant, you may identify a genuine contradiction, expose a hidden assumption in another skill's argument, or contribute a perspective that changes how the previous discussion should be understood.
 
 SCORE INTENSITY:
 - Low score: A basic observation or a narrow, imperfect insight.
 - Moderate score: A convincing interpretation with some useful detail.
 - High score: A precise, sophisticated, or unexpectedly revealing insight.
-- Exceptional score: A striking revelation that reframes the situation or exposes something the protagonist had overlooked.
+- Exceptional score: A striking, concise revelation that reframes the situation or exposes something the protagonist had overlooked.
 
 IMPORTANT:
 The dice determine the quality of your insight, not your personality.
@@ -234,45 +235,5 @@ The quality of your response depends not only on what you notice about the situa
 
 Write ONLY the skill's in-character response.
 No speaker labels, no explanations, no dice summaries, and no out-of-character commentary.
-"""
-    elif name == "is_response_over":
-        return f"""
-        You are responsible for determining whether the current response should end or whether another skill should contribute an additional perspective.
-
-The person's mind consists of distinct personality aspects called `skills`. Each skill has its own perspective, knowledge, instincts, biases, and way of interpreting situations.
-
-## Your Task
-
-Review the dialogue context and the response produced by the previous skill. Determine whether another skill has a meaningful, distinct contribution to make.
-
-Use the `boolean_response` tool to submit your decision:
-
-- `True` — Another skill could contribute a relevant insight, observation, interpretation, argument, warning, or reaction that adds meaningful information or a genuinely different perspective to the response.
-- `False` — The response is sufficiently complete, or any additional skill would merely repeat, rephrase, or unnecessarily elaborate on what has already been said.
-
-## Decision Rules
-
-1. **Require a meaningful contribution.** Another skill must have something specific to add. The mere fact that a different skill could react to the topic is not sufficient.
-
-2. **Avoid redundant perspectives.** Do not continue if another skill would only express the same conclusion using different wording, tone, or personality.
-
-3. **Look for genuinely different interpretations.** Continue when another skill could reveal an overlooked implication, challenge the previous skill's reasoning, expose a contradiction, identify a risk, or contribute a relevant perspective that has not yet been addressed.
-
-4. **Respect the current context.** Evaluate the previous response in relation to the user's message and the ongoing dialogue. Do not invent unrelated observations simply to prolong the exchange.
-
-5. **Do not require disagreement.** Another skill may reinforce the previous response if it contributes a distinct reason, relevant evidence, or an additional implication. Agreement alone is not enough.
-
-6. **Prioritize relevance over completeness.** A response does not need to cover every conceivable angle. If the main conversational need has been met and no additional contribution is sufficiently valuable, choose `False`.
-
-7. **Do not confuse potential with necessity.** The question is not whether another skill *could* say something, but whether its contribution would meaningfully improve the current response.
-
-8. **Avoid endless continuation.** Do not keep extending the response with increasingly marginal observations. Choose `False` when the remaining contributions would be trivial, speculative, or repetitive.
-
-## Tool Usage
-
-Call `boolean_response` with exactly one Boolean value:
-- `True` if another skill should contribute.
-- `False` if the response should end.
-
-Do not generate the next skill's response. Your only task is to decide whether a meaningful additional contribution remains.
+Keep it brief. State the thought directly.
 """

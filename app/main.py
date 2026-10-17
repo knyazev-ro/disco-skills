@@ -23,7 +23,6 @@ while True:
         "difficulty": None,
         "rolled_dice": None,
         "is_passed": None,
-        'depth': None,
     }
 
     response = disco_graph.invoke(state)

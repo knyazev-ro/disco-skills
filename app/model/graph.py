@@ -17,7 +17,6 @@ class MessagesState(TypedDict):
     difficulty: Optional[int]
     rolled_dice: Optional[int]
     is_passed: Optional[bool]
-    depth: Optional[int]
 
 def check_if_skill_response_needed(state: MessagesState):
     
@@ -59,7 +58,7 @@ def determine_subskill(state: MessagesState):
     # if skill X then what subskill Y
     response = decider.invoke([
         SystemMessage(
-            content=pull_prompt('subskill_decision_prompt', skill=state['skill'], old_subskill=state['subskill'])
+            content=pull_prompt('subskill_decision_prompt', skill=state['skill'])
         ),
     ] + state['messages'])
 
@@ -112,28 +111,10 @@ def generate_subskill_response(state: MessagesState):
         'r': state['rolled_dice'],
         'p': state['is_passed'],
     }
-
+    
     return {
         'messages': [response],
-        "depth": (0 if state['depth'] is None else state['depth']) + 1
     }
-
-def is_response_over(state: MessagesState):
-    response = decider.invoke([
-        SystemMessage(
-            content=pull_prompt('is_response_over')
-        ),
-    ] + state['messages'])
-
-    tool_response = None
-    for tool_call in response.tool_calls:
-        if tool_call['name'] == "boolean_response":
-            tool_response = boolean_response.invoke(tool_call['args'])
-
-    if tool_response and (0 if state['depth'] is None else state['depth']) <= DEPTH_LIMIT:
-        return "check_if_skill_response_needed"
-    else:
-        return END
 
 
 disco_builder = StateGraph(MessagesState)
@@ -145,11 +126,8 @@ disco_builder.add_node('generate_subskill_response', generate_subskill_response)
 
 disco_builder.add_edge(START, 'check_if_skill_response_needed')
 disco_builder.add_conditional_edges('check_if_skill_response_needed', determine_skill, ['determine_subskill', END])
-# disco_builder.add_edge('determine_subskill', 'determine_skill_check')
 disco_builder.add_conditional_edges('determine_subskill', check_if_subskill_is_set, ['determine_skill_check', END])
-
 disco_builder.add_edge('determine_skill_check', 'generate_subskill_response')
-disco_builder.add_conditional_edges('generate_subskill_response', is_response_over, ['check_if_skill_response_needed', END])
-# disco_builder.add_edge('generate_subskill_response', END)
+disco_builder.add_edge('generate_subskill_response', END)
 
 disco_graph = disco_builder.compile()
