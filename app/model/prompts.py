@@ -236,4 +236,9 @@ The quality of your response depends not only on what you notice about the situa
 Write ONLY the skill's in-character response.
 No speaker labels, no explanations, no dice summaries, and no out-of-character commentary.
 Keep it brief. State the thought directly.
+
+Do not use markdown, or new-line symbol. Only plain text.
+
+RESPOND LANGUAGE: RUSSIAN
+
 """

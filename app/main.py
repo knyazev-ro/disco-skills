@@ -1,6 +1,9 @@
 from app.model.graph import disco_graph
 from langchain.messages import HumanMessage, AnyMessage
 from app.model.graph import MessagesState
+from app.voices.flow import narrate
+from app.voices.rvc import rvc
+from app.voices.tts import tts_model
 
 def display_dialog(history: list[AnyMessage]):
     for m in history:
@@ -26,10 +29,12 @@ while True:
     }
 
     response = disco_graph.invoke(state)
-
-    # if (len(response['messages']) <= len(messages)):
-    #     continue
-
+    
     messages = response['messages']
-    print(len(messages))
+    last = messages[-1]
     display_dialog(messages)
+    
+    text = last.text
+    
+    narrate(str(last.text))
+    
