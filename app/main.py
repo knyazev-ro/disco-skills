@@ -4,6 +4,7 @@ from app.model.graph import MessagesState
 from app.voices.flow import narrate
 from app.voices.rvc import rvc
 from app.voices.tts import tts_model
+from app.voices.sounds import sound_start, sound_dialog_answer
 
 def display_dialog(history: list[AnyMessage]):
     for m in history:
@@ -17,7 +18,8 @@ def display_dialog(history: list[AnyMessage]):
 messages: list[AnyMessage] = []
 
 while True:
-    income_message = input('>: ') 
+    sound_start()
+    income_message = input('>: ')
 
     state: MessagesState = {
         "messages": messages + [HumanMessage(content=income_message)],
@@ -33,8 +35,5 @@ while True:
     messages = response['messages']
     last = messages[-1]
     display_dialog(messages)
-    
-    text = last.text
-    
     narrate(str(last.text))
     

@@ -3,6 +3,7 @@ from app.voices.tts import tts_model, synthesize
 import soundfile as sf
 import sounddevice as sd
 from rvc_python.modules.vc.pipeline import cache_harvest_f0
+from app.voices.sounds import sound_start, sound_dialog_answer
 
 def make_tts(text: str):
     audio = synthesize(tts_model, text, "eugene", 48000)
@@ -21,6 +22,7 @@ def make_rvc():
 def narrate(text: str):
     make_tts(text)
     make_rvc()
+    sound_dialog_answer()
     audio, sample_rate = sf.read("output.wav")
     sd.play(audio, sample_rate)
     sd.wait()

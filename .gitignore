@@ -2,3 +2,5 @@
 venv
 voice_models
 __pycache__/
+resources
+*.wav
